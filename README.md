@@ -4,8 +4,8 @@ It performs semantic annotations for numerical values based on features computed
 
 # Feature files
 
-    | CLASS_URI | PROPERTY_URI | #NUMERIC_VALS | MEAN | MEDIAN | STD |
-    | :-------: | :----------: | :-----------: | :--: | :----: | :-: |
+| CLASS_URI | PROPERTY_URI | #NUMERIC_VALS | MEAN | MEDIAN | STD |
+| :-------: | :----------: | :-----------: | :--: | :----: | :-: |
 
 
 
