@@ -1,3 +1,7 @@
+# Qt Creator
+tada-swift.qbs
+tada-swift.qbs.user
+
 # Prerequisites
 *.d
 
