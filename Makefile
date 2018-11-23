@@ -1,17 +1,17 @@
-HEADERS = tada_swift.h logger.h
+HEADERS = tada_swift.h  
 NOMOBJS =  tada_swift.o # no main objects
 OBJS =  $(NOMOBJS) main.o 
 TOBJS = $(NOMOBJS) tests.o
-NOMSOURCES = tada_swift.cpp logger.cpp  # sources excluding main.cpp
+NOMSOURCES = tada_swift.cpp # sources excluding main.cpp
 SOURCES = $(NOMSOURCES) main.cpp
 TSOURCES = $(NOMSOURCES) tests.cpp # test sources
-CXXFLAGS = -std=c++11  
+CXXFLAGS = -I /usr/local/include/eigen3  -std=c++11  
 CC = g++
 OBJ_DIR = build
 SRC_DIR = src
 BIN_DIR = bin
-#LIBS = -lfcm -pthread
-LIBS = -pthread
+LIBS = -lfcm -pthread -leasylogger
+#LIBS = -pthread
 TLIBS = $(LIBS) -lgtest
 TESTAPP = bin/testtadaswift
 COVAPP = bin/covtadaswift
@@ -75,12 +75,11 @@ gcov:
 	$(CC) -o $(COVAPP) -fprofile-arcs -ftest-coverage $(TOBJS_ABS) $(TLIBS)
 	$(COVAPP)
 
-
 cleancov:
 	-rm -Rf $(COVCLEANFILES)
 	
 run: 
-	bin/tadaswift
+	bin/tadaswift ${ARGS}
 
 clean:
 	$(RM) -R $(BIN_DIR)/* 

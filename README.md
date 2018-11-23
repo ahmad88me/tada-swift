@@ -4,6 +4,8 @@ It performs semantic annotations for numerical values based on features computed
 
 # Feature files
 
+format: `tsv` Tab Separated Values
+
 | CLASS_URI | PROPERTY_URI | #NUMERIC_VALS | MEAN | MEDIAN | STD |
 | :-------: | :----------: | :-----------: | :--: | :----: | :-: |
 
