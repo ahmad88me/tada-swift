@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
+#include <stdio.h>
 #include <list>
 #include <string>
 #include <fcm/fcm.h>
@@ -10,6 +12,8 @@
 
 
 TADASwift::TADASwift(){
+    string log_fname="swift.log";
+    fopen(log_fname.c_str(),"w");
     m_logger = new EasyLogger("swift.log");
     m_fcm = new FCM(2, 0.005);
     m_enabled_features[0]=false; // mean
@@ -19,6 +23,7 @@ TADASwift::TADASwift(){
 
 
 void TADASwift::train(string model_dir){
+    /* This is to train the model from a given tsv file of features */
     string line;
     std::list<std::list<double>*> *features_list = new std::list<std::list<double>*>;
     std::list<string> *line_elements;
@@ -32,13 +37,18 @@ void TADASwift::train(string model_dir){
                 //cout << line <<endl;
                 m_logger->log("The line: ");
                 m_logger->log(line);
-                line_elements = this->parse_line(line);
+                line_elements = this->parse_line(line);  // get the class, property, num of objects and set of features
+                // To store the names of the clusters
                 m_clusters_names[clus_id++] = (*(line_elements->cbegin())) + "\t" + (*(++(line_elements->cbegin())));
-                features_for_point = new std::list<double>;
+                features_for_point = new std::list<double>; // features for a class/property pair
                 feature_idx=0;
+                // Loop for each feature
                 for(auto it=++++++(line_elements->cbegin()); it != line_elements->cend(); it++, feature_idx++){
+                    // If the feature is enabled
                     if(m_enabled_features[feature_idx]){
+                        // check if it is a number
                         if(this->str_to_double(*it, value)){
+                            // and store it
                             features_for_point->push_back(value);
                         }
                         else{
@@ -46,6 +56,7 @@ void TADASwift::train(string model_dir){
                         }
                     }
                 }
+                // append the list of features
                 features_list->push_back(features_for_point);
             }//while
             this->set_model_from_features(features_list);
@@ -105,25 +116,16 @@ void TADASwift::set_model_from_features(std::list<std::list<double>*>* features_
     MatrixXf* data;
     long i,j;
     data = new MatrixXf;
-    //cout << "num of row: " << features_list->size()<< endl;
-    //cout << "nu of cols: " << (*(features_list->cbegin()))->size() <<endl;
+    m_logger->log(" num of rows: "+to_string(features_list->size()));
+    m_logger->log(" num of cols: "+to_string((*(features_list->cbegin()))->size()));
     data->resize(features_list->size(), (*(features_list->cbegin()))->size());
     i=0;
-    //cout << "resized: "<<endl;
     for(auto it=features_list->cbegin(); it!= features_list->cend(); it++, i++){
-        //cout << "outer " <<endl;
         j=0;
         for(auto jt=(*it)->cbegin(); jt!=(*it)->cend() ; jt++, j++){
-            //cout << "inner ";
-            //cout << *jt << " " ;
-            //cout << i << ", " << j<<endl;
             (*data)(i,j) = *jt;
         }
-        //cout << endl;
     }
-    cout << "data: "<<endl;
-    cout << (*data);
-    cout<<endl;
     m_fcm->set_data(data);
     MatrixXf* membership;
     membership = new MatrixXf;
@@ -133,9 +135,9 @@ void TADASwift::set_model_from_features(std::list<std::list<double>*>* features_
     for(auto it=features_list->cbegin(); it!= features_list->cend(); it++, i++){
         (*membership)(i,i) = 1;
     }
-    cout << "membership: "<<endl;
-    cout << (*membership);
-    cout<<endl;
+    stringstream s;
+    s << (*membership);
+    m_logger->log(s.str());
     m_fcm->set_membership(membership);
 }
 

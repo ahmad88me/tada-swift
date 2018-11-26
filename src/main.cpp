@@ -4,10 +4,15 @@
 using namespace std;
 
 int main(int argc, char** argv){
-    cout << "Hello World!" <<endl;
+    cout << "Hello TADA Swift!" <<endl;
     TADASwift tada;
     for(int i=0;i<argc;i++){
         cout<< "arg " << i << "> " << argv[i] <<endl;
     }
-    tada.train("golfplayers.tsv");
+    if(argc>1){
+        tada.train(argv[1]);
+    }
+    else{
+        //tada.train("golfplayers.tsv");
+    }
 }
