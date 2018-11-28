@@ -1,0 +1,7 @@
+FROM ahmad88me/fcm:latest
+
+WORKDIR /app
+
+COPY scripts/setup.sh setup.sh
+RUN sh setup.sh
+
