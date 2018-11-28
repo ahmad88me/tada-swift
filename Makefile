@@ -31,7 +31,7 @@ $(OBJS_ABS): $(SOURCES_ABS)
 	$(CC) $(CXXFLAGS) -c $(SOURCES_ABS)
 	mv *.o build/
 
-.PHONY: clean run debug test cov cleancov gcov codecov gcovr covnoclean
+.PHONY: clean run debug test cov cleancov  codecov  covnoclean
 
 debug: 
 	$(CC) $(CXXFLAGS) -g -c $(SOURCES_ABS)
@@ -40,15 +40,15 @@ debug:
 	valgrind --tool=massif bin/tadanum --time-unit=B --stacks=yes
 
 test:
-	$(CC) -c $(TSOURCES_ABS)
+	$(CC) $(CXXFLAGS) -c $(TSOURCES_ABS)
 	mv *.o build/
-	$(CC) -o $(TESTAPP) $(TOBJS_ABS) $(TLIBS)
+	$(CC) $(CXXFLAGS) -o $(TESTAPP) $(TOBJS_ABS) $(TLIBS)
 	$(TESTAPP)
 
 covnoclean:
-	$(CC) -c -fprofile-arcs -ftest-coverage -fPIC  $(TSOURCES_ABS)
+	$(CC) $(CXXFLAGS) -c -fprofile-arcs -ftest-coverage -fPIC  $(TSOURCES_ABS)
 	mv *.o build/
-	$(CC) -o $(COVAPP) -fprofile-arcs -ftest-coverage $(TOBJS_ABS) $(TLIBS) 
+	$(CC) $(CXXFLAGS) -o $(COVAPP) -fprofile-arcs -ftest-coverage $(TOBJS_ABS) $(TLIBS) 
 	$(COVAPP)
 	lcov --directory . --capture --output-file coverage.info
 	lcov --remove coverage.info '/usr/*' --output-file coverage.info
@@ -58,9 +58,6 @@ cov:
 	$(MAKE) covnoclean
 	$(MAKE) clean
 
-gcovr:
-	gcovr -r .
-
 codecov:
 	$(MAKE) covnoclean
 	curl -s https://codecov.io/bash > codecovpush.sh
@@ -69,11 +66,6 @@ codecov:
 	rm codecovpush.sh
 	$(MAKE) clean	
 
-gcov:
-	$(CC) -c -fprofile-arcs -ftest-coverage $(TSOURCES_ABS)
-	mv *.o build/
-	$(CC) -o $(COVAPP) -fprofile-arcs -ftest-coverage $(TOBJS_ABS) $(TLIBS)
-	$(COVAPP)
 
 cleancov:
 	-rm -Rf $(COVCLEANFILES)

@@ -11,4 +11,5 @@ COPY src /app/src
 COPY Makefile /app/Makefile
 COPY .git /app/.git
 
+CMD ["sh", "scripts/start.sh"]
 
