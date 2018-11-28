@@ -5,19 +5,23 @@
 #include <list>
 #include <string>
 #include <fcm/fcm.h>
+#include "features.h"
 #include <Eigen/Dense>
 #include <easy_logger/easy_logger.h>
 //#include <algorithm>
+#include <tabular_parser/parser.h>
 #include "tada_swift.h"
 
+using namespace std;
 
 TADASwift::TADASwift(){
+    m_parsed_data = nullptr;
     string log_fname="swift.log";
     fopen(log_fname.c_str(),"w");
     m_logger = new EasyLogger("swift.log");
     m_fcm = new FCM(2, 0.005);
     m_enabled_features[0]=false; // mean
-    m_enabled_features[1]=true; // media
+    m_enabled_features[1]=true; // median
     m_enabled_features[2]=true; // std
 }
 
@@ -59,22 +63,115 @@ void TADASwift::train(string model_dir){
                 // append the list of features
                 features_list->push_back(features_for_point);
             }//while
-            this->set_model_from_features(features_list);
+            m_logger->log("getting all clusters names");
+            for(auto it = m_clusters_names.begin(); it != m_clusters_names.end(); it++) {
+                m_logger->log(to_string(it->first) + "\t=>\t" + (it->second));
+                //cout << (it->first) << "\t=>\t"<< (it->second)<<endl;
+            }
+            return this->set_model_from_features(features_list);
         }//if open
     else{
         cout<< __func__ << " ERROR: unable to open the model: "<< model_dir<<endl;
     }
 }
 
-std::list<string>* TADASwift::classify(string model_dir){
+
+std::list<string>* TADASwift::classify(int column_no){
+    double value;
+    std::list<double> *l;
+    std::list<double> features_for_col;
+    int idx=0;
+
+    for(auto it=m_parsed_data->cbegin(); it!=m_parsed_data->cend();it++){
+        if(idx==column_no){
+            // get the list as numeric list
+            l = this->get_numbers_from_list(*it);
+            if(l!=nullptr){
+                m_logger->log("size: "+to_string(l->size()));
+
+                if(m_enabled_features[0]){
+                    m_logger->log("will compute the mean");
+                    features_for_col.push_back(Features::mean(l));
+                }
+                if(m_enabled_features[1]){
+                    m_logger->log("will compute the median");
+                    features_for_col.push_back(Features::median(l));
+                }
+                if(m_enabled_features[2]){
+                    m_logger->log("will compute the std");
+                    if(m_enabled_features[0]){// if mean is computed, don't compute it again
+                        features_for_col.push_back(Features::stdev(l,*(features_for_col.cbegin())));
+                    }
+                    else{// if mean is not computed, then do compute it
+                        features_for_col.push_back(Features::stdev(l,Features::mean(l)));
+                    }
+                }
+                m_logger->log("creating the data matrix");
+                MatrixXf *data = new MatrixXf;
+                data->resize(1, features_for_col.size());
+                m_logger->log("row: "+to_string(data->rows()));
+                m_logger->log("row: "+to_string(data->cols()));
+//                cout << "rows: "<<data->rows()<<endl;
+//                cout << "cols: "<<data->cols()<<endl;
+                int i=0;
+                m_logger->log("filling the features to the matrix");
+                for(auto it=features_for_col.cbegin();it!=features_for_col.cend();it++){
+                    (*data)(0,i++) = *it;
+                    //cout << "fill value: " <<*it<<endl;
+                }
+                m_logger->log("size of features: "+to_string(features_for_col.size()));
+//                for(i=0;i<features_for_col.size();i++){
+//                    cout << "stored data: " << (*data)(0,i) << endl;
+//                }
+
+                //Just to print the centers before fcm change the data
+                stringstream s_centers;
+                s_centers << (* (m_fcm->get_cluster_center()));
+                m_logger->log("cluster centers from the training: ");
+                m_logger->log("\n"+s_centers.str());
+
+
+
+                m_logger->log("setting the data to the fcm model");
+                m_fcm->set_data(data);
+
+
+                stringstream sss;
+                m_logger->log("getting the data");
+                m_logger->log("updating the fcm membership");
+                m_fcm->update_membership();
+                m_logger->log("creating a stream");
+                m_logger->log("feeding the stream with membership");
+                sss << (* (m_fcm->get_membership()));
+                m_logger->log("stream to string");
+                m_logger->log("\n"+sss.str());
+                m_logger->log("mem rows: "+to_string(m_fcm->get_membership()->rows()));
+                m_logger->log("mem cols: "+to_string(m_fcm->get_membership()->cols()));
+
+
+                //Just to print the centers after fcm change the data
+                stringstream s_centers_after;
+                s_centers_after << (* (m_fcm->get_cluster_center()));
+                m_logger->log("cluster centers after the classification: ");
+                m_logger->log("\n"+s_centers_after.str());
+                delete l;
+                return this->sorted_clus_membership();
+                break;
+            }
+        }
+        idx++;
+    }
     return nullptr;
 }
 
-std::list<string>* TADASwift::classify(string model_dir, int column_no){
-    return nullptr;
+void TADASwift::parse(string model_dir){
+    if(m_parsed_data!=nullptr){
+        delete m_parsed_data;
+    }
+    m_logger->log("will parse the file: "+model_dir);
+    Parser p(model_dir);
+    m_parsed_data = p.parse();
 }
-
-
 
 std::list<string>* TADASwift::parse_line(string line){
     std::list<string> *elements = new std::list<string>;
@@ -137,8 +234,66 @@ void TADASwift::set_model_from_features(std::list<std::list<double>*>* features_
     }
     stringstream s;
     s << (*membership);
-    m_logger->log(s.str());
+    m_logger->log("\n"+s.str());
     m_fcm->set_membership(membership);
+    m_fcm->compute_centers();
 }
 
+std::list<double> * TADASwift::get_numbers_from_list(std::list<string>* str_list){
+    double v;
+    std::list<double> *l = new std::list<double>;
+    long max_of_nonnum;
+    max_of_nonnum = str_list->size()/2;
+    m_logger->log("the size of the list: "+to_string(str_list->size()));
+    for(auto it=str_list->cbegin();it!=str_list->cend();it++){
+        m_logger->log("values in a column: "+(*it));
+        if(this->str_to_double(*it, v)){
+            l->push_back(v);
+        }
+        else{
+            if(max_of_nonnum==0){
+                delete l;
+                return nullptr;
+            }
+            max_of_nonnum--;
+        }
+    }
+    return l;
+}
+
+void TADASwift::print_data(){
+    if(m_parsed_data!=nullptr){
+        for(auto it=m_parsed_data->cbegin();it!=m_parsed_data->cend();it++){
+            for(auto jt=(*it)->cbegin();jt!=(*it)->cend();jt++){
+                cout << (*jt) << " ";
+            }
+            cout << endl<<"----------"<<endl;
+        }
+    }
+    else{
+        cout << "No parsed data\n";
+    }
+}
+
+std::list<string>* TADASwift::sorted_clus_membership(){
+    /*
+     * We assume the membership is for a single column
+    */
+    std::list<struct clus_memb_pair> clus_membs;
+    std::list<string>* results = new std::list<string>;
+    MatrixXf *membership = m_fcm->get_membership();
+    string s;
+    m_logger->log("pre sorted");
+    for(int i=0;i<membership->cols();i++){
+        clus_membs.push_back({i, (*membership)(0,i)});
+        m_logger->log("adding: memb for cluster: "+to_string(i)+" with value: "+to_string(clus_membs.back().memb));
+    }
+    clus_membs.sort();
+    for(auto it=clus_membs.cbegin();it!=clus_membs.cend();it++){
+        s = m_clusters_names[(*it).clus];
+        m_logger->log("sorted: cluster: "+to_string((*it).clus)+" with value: "+to_string((*it).memb)+" cluster name: "+s);
+        results->push_back(s);
+    }
+    return results;
+}
 
