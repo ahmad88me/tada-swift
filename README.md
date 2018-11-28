@@ -9,5 +9,6 @@ format: `tsv` Tab Separated Values
 | CLASS_URI | PROPERTY_URI | #NUMERIC_VALS | MEAN | MEDIAN | STD |
 | :-------: | :----------: | :-----------: | :--: | :----: | :-: |
 
-
+# Run
+`make run ARGS="golfplayers.tsv aaagolfplayers.csv 10 11"`
 
