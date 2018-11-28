@@ -1,10 +1,25 @@
 #include <string>
+#include <list>
+#include "tada_swift.h"
 #include <gtest/gtest.h>
 
 namespace {
-    TEST(SwiftTests, Test){
+    TEST(SwiftTests, TestConfig){
         EXPECT_EQ(1,1);
     }
+
+    TEST(SwiftTests, Golf){
+        TADASwift tada;
+        std::list<string>* results = new std::list<string>;
+        tada.train("golfplayers.tsv");
+        tada.parse("aaagolfplayers.csv");
+        results = tada.classify(10);
+        delete results;
+        EXPECT_EQ(results->front(),"http://dbpedia.org/ontology/GolfPlayer\thttp://dbpedia.org/ontology/Person/height");
+        results = tada.classify(11);
+        EXPECT_EQ(results->front(),"http://dbpedia.org/ontology/GolfPlayer\thttp://dbpedia.org/ontology/Person/weight");
+        delete results;
+     }
 
 }// namespace
 

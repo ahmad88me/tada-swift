@@ -17,6 +17,9 @@ bin/tadaswift
 tada-swift.qbs
 tada-swift.qbs.user
 
+* noise
+*.swp
+
 # Prerequisites
 *.d
 
