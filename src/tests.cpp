@@ -14,9 +14,11 @@ namespace {
         tada.train("golfplayers.tsv");
         tada.parse("aaagolfplayers.csv");
         results = tada.classify(10);
-        delete results;
+        //cout << "\nfront: "<< results->front() <<endl;
         EXPECT_EQ(results->front(),"http://dbpedia.org/ontology/GolfPlayer\thttp://dbpedia.org/ontology/Person/height");
+        delete results;
         results = tada.classify(11);
+        //cout << "\nfront: "<< results->front()<< endl;
         EXPECT_EQ(results->front(),"http://dbpedia.org/ontology/GolfPlayer\thttp://dbpedia.org/ontology/Person/weight");
         delete results;
      }
