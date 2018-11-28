@@ -1,10 +1,17 @@
+
+
+
 # mac
 .DS_Store
 
 
 # output
-*.tsv
+*.tsv 
+!golfplayers.tsv
 *.log
+*.csv
+!aaagolfplayers.csv 
+bin/tadaswift
 
 # Qt Creator
 tada-swift.qbs

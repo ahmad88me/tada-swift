@@ -1,8 +1,8 @@
-HEADERS = tada_swift.h  
-NOMOBJS =  tada_swift.o # no main objects
+HEADERS = tada_swift.h features.h 
+NOMOBJS =  tada_swift.o features.o # no main objects
 OBJS =  $(NOMOBJS) main.o 
 TOBJS = $(NOMOBJS) tests.o
-NOMSOURCES = tada_swift.cpp # sources excluding main.cpp
+NOMSOURCES = tada_swift.cpp features.cpp # sources excluding main.cpp
 SOURCES = $(NOMSOURCES) main.cpp
 TSOURCES = $(NOMSOURCES) tests.cpp # test sources
 CXXFLAGS = -I /usr/local/include/eigen3  -std=c++11  
@@ -10,7 +10,7 @@ CC = g++
 OBJ_DIR = build
 SRC_DIR = src
 BIN_DIR = bin
-LIBS = -lfcm -pthread -leasylogger
+LIBS = -lfcm -pthread -leasylogger -ltabularparser
 #LIBS = -pthread
 TLIBS = $(LIBS) -lgtest
 TESTAPP = bin/testtadaswift
