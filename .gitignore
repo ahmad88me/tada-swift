@@ -8,6 +8,7 @@
 # output
 *.tsv 
 !golfplayers.tsv
+!features.tsv
 *.log
 *.csv
 !aaagolfplayers.csv 
